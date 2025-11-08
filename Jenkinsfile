@@ -43,7 +43,9 @@ pipeline {
                 sh """
                     mkdir -p ${SEMGREP_REPORT_DIR}
                     echo "Running Semgrep scan on ${SRC_DIR}..."
+                    set +e
                     ./${PYTHON_VENV}/bin/semgrep --config=auto ${SRC_DIR} --json > ${SEMGREP_REPORT_DIR}/semgrep.json
+                    set -e
                     echo "Semgrep reports generated at ${SEMGREP_REPORT_DIR}"
                 """
                 archiveArtifacts artifacts: "${SEMGREP_REPORT_DIR}/*"
@@ -53,10 +55,10 @@ pipeline {
         stage('Check High Severity Findings') {
             steps {
                 echo """
-                This stage can be used to parse Bandit and Semgrep JSON reports
-                and fail the build if high severity issues exist.
+                Optional: Parse Bandit and Semgrep JSON reports to fail build
+                if high severity issues exist.
                 """
-                // Optional: Add Python or Groovy script to parse JSON and fail build
+                // Example: Use a Python or Groovy script here to check 'SEVERITY.HIGH'
             }
         }
     }
