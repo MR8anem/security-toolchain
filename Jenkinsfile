@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PYTHON_VENV = ".venv"
-        SRC_DIR = "vulnerable-demo"
+        SRC_DIR = "."                       // Scan the repo root
         BANDIT_REPORT_DIR = "reports/bandit"
         SEMGREP_REPORT_DIR = "reports/semgrep"
     }
@@ -11,6 +11,7 @@ pipeline {
     stages {
         stage('Checkout SCM') {
             steps {
+                // Checkout the vulnerable-demo repo directly into workspace
                 git url: 'https://github.com/MR8anem/vulnerable-demo', branch: 'main'
             }
         }
@@ -58,7 +59,7 @@ pipeline {
                 Optional: Parse Bandit and Semgrep JSON reports to fail build
                 if high severity issues exist.
                 """
-                // Example: Use a Python or Groovy script here to check 'SEVERITY.HIGH'
+                // You can later add Python/Groovy scripts to parse 'SEVERITY.HIGH'
             }
         }
     }
