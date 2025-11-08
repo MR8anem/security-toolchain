@@ -2,22 +2,25 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = '.venv'
+        PYTHON_VENV = ".venv"
+        SRC_DIR = "vulnerable-demo"
+        BANDIT_REPORT_DIR = "reports/bandit"
+        SEMGREP_REPORT_DIR = "reports/semgrep"
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
-                git url: 'https://github.com/MR8anem/vulnerable-demo.git', branch: 'main'
+                git url: 'https://github.com/MR8anem/vulnerable-demo', branch: 'main'
             }
         }
 
         stage('Setup Python') {
             steps {
                 sh """
-                    python3 -m venv ${VENV_DIR}
-                    ./${VENV_DIR}/bin/pip install --upgrade pip
-                    ./${VENV_DIR}/bin/pip install bandit semgrep
+                    python3 -m venv ${PYTHON_VENV}
+                    ./${PYTHON_VENV}/bin/pip install --upgrade pip
+                    ./${PYTHON_VENV}/bin/pip install bandit semgrep
                 """
             }
         }
@@ -25,34 +28,42 @@ pipeline {
         stage('Bandit Scan') {
             steps {
                 sh """
-                    mkdir -p reports/bandit
-                    ./${VENV_DIR}/bin/bandit -r . -f json -o reports/bandit/bandit.json
-                    ./${VENV_DIR}/bin/bandit -r . -f html -o reports/bandit/bandit.html
-                    echo "Bandit reports generated at reports/bandit"
+                    mkdir -p ${BANDIT_REPORT_DIR}
+                    echo "Running Bandit scan on ${SRC_DIR}..."
+                    ./${PYTHON_VENV}/bin/bandit -r ${SRC_DIR} -f json -o ${BANDIT_REPORT_DIR}/bandit.json
+                    ./${PYTHON_VENV}/bin/bandit -r ${SRC_DIR} -f html -o ${BANDIT_REPORT_DIR}/bandit.html
+                    echo "Bandit reports generated at ${BANDIT_REPORT_DIR}"
                 """
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/bandit/**', allowEmptyArchive: true
-                }
+                archiveArtifacts artifacts: "${BANDIT_REPORT_DIR}/*"
             }
         }
 
         stage('Semgrep Scan') {
             steps {
                 sh """
-                    mkdir -p reports/semgrep
-                    ./${VENV_DIR}/bin/semgrep --config=auto . -o reports/semgrep/semgrep.json
-                    echo "Semgrep reports generated at reports/semgrep"
+                    mkdir -p ${SEMGREP_REPORT_DIR}
+                    echo "Running Semgrep scan on ${SRC_DIR}..."
+                    ./${PYTHON_VENV}/bin/semgrep --config=auto ${SRC_DIR} --json > ${SEMGREP_REPORT_DIR}/semgrep.json
+                    echo "Semgrep reports generated at ${SEMGREP_REPORT_DIR}"
                 """
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/semgrep/**', allowEmptyArchive: true
-                }
+                archiveArtifacts artifacts: "${SEMGREP_REPORT_DIR}/*"
             }
         }
 
         stage('Check High Severity Findings') {
             steps {
-                echo "You
+                echo """
+                This stage can be used to parse Bandit and Semgrep JSON reports
+                and fail the build if high severity issues exist.
+                """
+                // Optional: Add Python or Groovy script to parse JSON and fail build
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished. All reports are archived."
+        }
+    }
+}
