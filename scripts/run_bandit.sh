@@ -1,10 +1,13 @@
-#!/usr/bin/env bash
-set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TARGET="$1"
-OUT="$ROOT/reports/bandit"
-mkdir -p "$OUT"
+#!/bin/bash
+set -e
+
+TARGET_DIR="$1"
+REPORT_DIR="../reports/bandit"
+
+mkdir -p "$REPORT_DIR"
+
 echo "Running Bandit scan..."
-bandit -r "$TARGET" -f json -o "$OUT/bandit.json"
-bandit -r "$TARGET" -f html -o "$OUT/bandit.html"
-echo "Bandit reports generated at $OUT"
+../.venv/bin/bandit -r "$TARGET_DIR" -f json -o "$REPORT_DIR/bandit.json"
+../.venv/bin/bandit -r "$TARGET_DIR" -f html -o "$REPORT_DIR/bandit.html"
+
+echo "Bandit reports generated at $REPORT_DIR"
