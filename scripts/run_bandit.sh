@@ -1,6 +1,8 @@
 #!/bin/sh
 
-WORKSPACE=$(pwd)/..
+# Absolute path to workspace root
+WORKSPACE=$(pwd)
+
 TARGET_DIR="$1"
 REPORT_DIR="$WORKSPACE/reports/bandit"
 
