@@ -2,67 +2,57 @@ pipeline {
     agent any
 
     environment {
-        REPORT_DIR = 'reports'
         VENV_DIR = '.venv'
     }
 
     stages {
-
         stage('Checkout SCM') {
             steps {
-                checkout scm
+                git url: 'https://github.com/MR8anem/vulnerable-demo.git', branch: 'main'
             }
         }
 
         stage('Setup Python') {
             steps {
-                sh '''
+                sh """
                     python3 -m venv ${VENV_DIR}
-                    ${VENV_DIR}/bin/pip install --upgrade pip
-                    ${VENV_DIR}/bin/pip install bandit semgrep
-                '''
+                    ./${VENV_DIR}/bin/pip install --upgrade pip
+                    ./${VENV_DIR}/bin/pip install bandit semgrep
+                """
             }
         }
 
         stage('Bandit Scan') {
             steps {
-                sh '''
-                    ./scripts/run_bandit.sh src
-                '''
+                sh """
+                    mkdir -p reports/bandit
+                    ./${VENV_DIR}/bin/bandit -r . -f json -o reports/bandit/bandit.json
+                    ./${VENV_DIR}/bin/bandit -r . -f html -o reports/bandit/bandit.html
+                    echo "Bandit reports generated at reports/bandit"
+                """
             }
             post {
                 always {
-                    archiveArtifacts artifacts: "${REPORT_DIR}/bandit/**", allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/bandit/**', allowEmptyArchive: true
                 }
             }
         }
 
         stage('Semgrep Scan') {
             steps {
-                sh '''
-                    ./scripts/run_semgrep.sh src semgrep-rules
-                '''
+                sh """
+                    mkdir -p reports/semgrep
+                    ./${VENV_DIR}/bin/semgrep --config=auto . -o reports/semgrep/semgrep.json
+                    echo "Semgrep reports generated at reports/semgrep"
+                """
             }
             post {
                 always {
-                    archiveArtifacts artifacts: "${REPORT_DIR}/semgrep/**", allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/semgrep/**', allowEmptyArchive: true
                 }
             }
         }
 
         stage('Check High Severity Findings') {
             steps {
-                echo "This stage can analyze reports and fail build if high severity issues exist."
-            }
-        }
-    }
-
-    post {
-        always {
-            echo "Pipeline finished. Reports are archived."
-        }
-        failure {
-            echo "❌ Build failed due to earlier errors."
-        }
-    }
-}
+                echo "You
